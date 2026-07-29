@@ -1,6 +1,6 @@
 # v1 Build Plan — Ecommerce Store Assessment
 
-Status: **LOCKED — Owner lock, 2026-07-29**
+Status: **DONE — completed 2026-07-29 (locked same day, all phases delivered)**
 
 This is the single source of truth for the v1 build. Nothing gets implemented that isn't in this doc; if scope changes, this doc changes first.
 
@@ -145,13 +145,13 @@ Phases 4–6 are where "show your thinking" lives — small commits, tests land 
 
 ## 8. Definition of Done (v1)
 
-- [ ] `pnpm install && pnpm dev` runs API + web together; `pnpm test` green from root
-- [ ] All endpoints in §4 implemented and validated with shared schemas
-- [ ] Business rules R1–R6 implemented exactly as locked
-- [ ] Unit + integration tests per §6 passing
-- [ ] Frontend covers all four views in §5
-- [ ] README: setup, scripts, API reference (serves as the Postman-alternative), assumptions
-- [ ] DECISIONS.md has ≥5 decisions (currently 4 — candidates: in-memory store design, global-vs-per-user nth order, integer cents for money, admin-generates-code interpretation)
+- [x] `pnpm install && pnpm dev` runs API + web together; `pnpm test` green from root
+- [x] All endpoints in §4 implemented and validated with shared schemas
+- [x] Business rules R1–R6 implemented exactly as locked
+- [x] Unit + integration tests per §6 passing (31 tests: 25 unit + 6 integration)
+- [x] Frontend covers all four views in §5
+- [x] README: setup, scripts, API reference (serves as the Postman-alternative), assumptions
+- [x] DECISIONS.md has ≥5 decisions (7: stack, monorepo, shared zod schemas, frontend stack, global nth-order + admin generation, integer cents, injectable in-memory store)
 
 ---
 
