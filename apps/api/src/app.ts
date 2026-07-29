@@ -1,7 +1,9 @@
 import express from "express";
 import { type AppConfig, defaultConfig } from "./config.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
+import { cartRouter } from "./routes/cart.routes.js";
 import { productsRouter } from "./routes/products.routes.js";
+import { CartService } from "./services/cart.service.js";
 import { InMemoryStore } from "./store/store.js";
 
 /**
@@ -19,7 +21,10 @@ export function createApp(
     res.json({ status: "ok" });
   });
 
+  const cartService = new CartService(store);
+
   app.use("/api/products", productsRouter(store));
+  app.use("/api/cart", cartRouter(cartService));
 
   void config; // consumed by checkout/admin routes in later phases
 
