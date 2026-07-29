@@ -24,6 +24,20 @@ export function useAddToCart() {
   });
 }
 
+export function useStats() {
+  return useQuery({ queryKey: ["stats"], queryFn: api.getStats });
+}
+
+export function useGenerateDiscountCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.generateDiscountCode,
+    // The new code appears in the stats' code list too.
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["stats"] }),
+  });
+}
+
 export function useCheckout() {
   const queryClient = useQueryClient();
   return useMutation({
