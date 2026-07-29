@@ -9,7 +9,7 @@ export interface CartItemRecord {
 }
 
 /**
- * Single in-memory store behind all services (no database per assignment).
+ * Single in-memory store behind all services (v1 runs without a database).
  * Holds state only — every business rule lives in the services layer.
  */
 export class InMemoryStore {

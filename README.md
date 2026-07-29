@@ -2,7 +2,7 @@
 
 A minimal ecommerce store with an **nth-order discount system**: clients add items to a cart and check out; every *n*th order store-wide unlocks a single-use discount code that an admin can generate and any customer can redeem at checkout.
 
-Built as a take-home assessment. The design is documented in [`DECISIONS.md`](./DECISIONS.md) (key trade-offs) and [`v1-build-plan.md`](./v1-build-plan.md) (the locked build plan this was implemented against).
+The design is documented in [`DECISIONS.md`](./DECISIONS.md) (key trade-offs) and [`v1-build-plan.md`](./v1-build-plan.md) (the locked build plan this was implemented against).
 
 ## Stack
 

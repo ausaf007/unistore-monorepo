@@ -2,7 +2,7 @@
   "name": "uniblox-store",
   "private": true,
   "version": "1.0.0",
-  "description": "Minimal ecommerce store with an nth-order discount system — assessment project",
+  "description": "Minimal ecommerce store with an nth-order discount system",
   "packageManager": "pnpm@11.9.0",
   "engines": {
     "node": ">=22"

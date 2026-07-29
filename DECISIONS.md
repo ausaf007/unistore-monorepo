@@ -2,29 +2,29 @@
 
 ## Decision: Node.js + TypeScript for the stack
 
-**Context:** The assignment allows any stack, but the client primarily works with TypeScript/Node.js. I need a stack that lets me move fast on an MVP while demonstrating skills relevant to how the client actually works.
+**Context:** An API-first store MVP that needs to ship fast without sacrificing correctness in the money-handling and discount logic at its core.
 
 **Options Considered:**
-- Option A: Node.js + TypeScript — matches the client's stack, strong typing for domain logic (cart, orders, discounts), huge ecosystem for testing and scaffolding.
-- Option B: Node.js + plain JavaScript — slightly faster to start, but loses compile-time safety on business logic the assessment is graded on.
-- Option C: Another stack I know (e.g. Python/Go) — viable, but signals less alignment with the client's day-to-day work.
+- Option A: Node.js + TypeScript — strong typing for domain logic (cart, orders, discounts), one language across backend and frontend, huge ecosystem for testing and tooling.
+- Option B: Node.js + plain JavaScript — slightly faster to start, but loses compile-time safety on exactly the business logic this project centers on.
+- Option C: Python/Go backend — viable, but splits the codebase across two languages once the frontend exists and rules out sharing contract definitions.
 
 **Choice:** Node.js + TypeScript.
 
-**Why:** TypeScript's type system makes the core business logic (discount eligibility, order counting, checkout validation) self-documenting and safer to refactor, and it mirrors the client's production stack — so the code I'm assessed on looks like the code I'd actually write for them. The compile step is a minor cost for a project this size.
+**Why:** TypeScript's type system makes the core business logic (discount eligibility, order counting, checkout validation) self-documenting and safer to refactor, and one language end-to-end is what makes shared API contracts (see the Zod decision) possible at all. The compile step is a minor cost for a project this size.
 
 ## Decision: Monorepo layout (backend + optional frontend in one repo)
 
-**Context:** Backend APIs are required; a frontend is a bonus that I intend to ship from the start. I want both in one repo without mixing concerns, keeping a clean separation between frontend and backend code. The submission is a single GitHub repo link, and commit history across the whole project should tell one coherent story.
+**Context:** The product is an API plus a web storefront. Both should live together without mixing concerns — a clean separation between frontend and backend code, but one place to clone, install, and review.
 
 **Options Considered:**
 - Option A: Monorepo with workspaces (e.g. `apps/api`, `apps/web`, shared types in `packages/`) — one repo, one setup command, shared TypeScript types between API and UI.
 - Option B: Single-package repo (backend only, frontend bolted in later) — simplest now, but adding a frontend later means either restructuring or mixing concerns in one `src/`.
-- Option C: Separate repos for frontend and backend — clean separation, but the assignment asks for one repo link, and it doubles setup/review friction.
+- Option C: Separate repos for frontend and backend — clean separation, but doubles setup and review friction and splits the project's history in two.
 
 **Choice:** Monorepo with workspaces.
 
-**Why:** It keeps frontend/backend code separated at the directory level while sharing one toolchain, one lockfile, and one commit history — which suits the "show your progression" requirement. API request/response types live in a shared package so both sides stay in sync. The overhead is minimal since modern package managers support workspaces natively.
+**Why:** It keeps frontend/backend code separated at the directory level while sharing one toolchain, one lockfile, and one commit history that tells a coherent story. API request/response types live in a shared package so both sides stay in sync. The overhead is minimal since modern package managers support workspaces natively.
 
 ## Decision: Zod schemas in `packages/shared` as the single source of truth
 
@@ -41,29 +41,29 @@
 
 ## Decision: Frontend stack — Vite + React SPA, Tailwind CSS, TanStack Query
 
-**Context:** The frontend is a bonus deliverable that should demonstrate competence without ballooning scope. It needs a store view, cart, checkout with discount code entry, and an admin stats view — all backed by the Express API.
+**Context:** The storefront needs a product grid, cart, checkout with discount-code entry, and an admin stats view — all backed by the Express API — without ballooning the scope of a v1.
 
 **Options Considered:**
-- Option A: Vite + React SPA — instant setup, dev-server proxy to the API, shares Vitest with the rest of the repo; no server-rendering machinery to maintain or explain.
+- Option A: Vite + React SPA — instant setup, dev-server proxy to the API, shares Vitest with the rest of the repo; no server-rendering machinery to maintain.
 - Option B: Next.js — powerful, but SSR/App Router solve SEO and routing problems this app doesn't have, and its API routes duplicate what Express already does.
-- Option C: Server-rendered templates from Express (EJS/Handlebars) — fewest moving parts, but demonstrates far less frontend skill and can't reuse shared types as naturally.
+- Option C: Server-rendered templates from Express (EJS/Handlebars) — fewest moving parts, but poor fit for the interactive cart/checkout flows and can't reuse shared types as naturally.
 
 **Choice:** Vite + React + TypeScript, styled with Tailwind CSS, server state via TanStack Query.
 
-**Why:** A SPA is the honest architecture for an API-driven store demo — no SEO requirement means SSR is pure overhead. Vite keeps the toolchain consistent (Vitest, TS config inheritance). Tailwind gets a presentable UI fast without CSS files to maintain. TanStack Query handles caching, loading/error states, and refetch-after-mutation for cart and stats — and since all meaningful state lives on the server, no Redux or other client-state library is needed. React specifically because it's the likeliest match for the client's own stack.
+**Why:** A SPA is the honest architecture for an API-driven store — no SEO requirement means SSR is pure overhead. Vite keeps the toolchain consistent (Vitest, TS config inheritance). Tailwind gets a presentable UI fast without CSS files to maintain. TanStack Query handles caching, loading/error states, and refetch-after-mutation for cart and stats — and since all meaningful state lives on the server, no Redux or other client-state library is needed. React for its ecosystem maturity and how naturally it pairs with the shared TypeScript contracts.
 
 ## Decision: Global nth-order counting, with codes generated by the admin API
 
-**Context:** The assignment's discount rule — "every nth order gets a coupon code" — is ambiguous on two axes: counted per-customer or store-wide, and issued automatically at checkout or via the admin endpoint ("generate a discount code if the condition above is satisfied").
+**Context:** The discount requirement — "every nth order gets a coupon code" — can be read two ways on two axes: counted per-customer or store-wide, and issued automatically at checkout or on demand through the admin API.
 
 **Options Considered:**
 - Option A: Global counting + admin-triggered generation — the nth order store-wide opens an "eligibility window"; each window entitles the admin to generate exactly one store-wide, single-use code.
-- Option B: Per-customer counting — every customer's own nth order earns them a personal code; more like a loyalty program, but requires per-customer order history and code ownership, and makes the admin "generate" endpoint redundant.
-- Option C: Auto-issue at checkout — the nth order response carries a code directly; simplest UX, but then the admin generation endpoint the assignment explicitly requires would have nothing left to do.
+- Option B: Per-customer counting — every customer's own nth order earns them a personal code; more like a loyalty program, but requires per-customer order history and code ownership, and makes an admin "generate" endpoint redundant.
+- Option C: Auto-issue at checkout — the nth order response carries a code directly; simplest UX, but leaves the admin generation endpoint with nothing to do.
 
 **Choice:** Global counting with admin-triggered generation (Option A). Windows queue if the admin generates late — 2n orders with no codes yet means two codes can be generated, but never more codes than windows.
 
-**Why:** Global counting matches the real-world pattern ("our 1000th customer gets a discount") and the assignment's framing of a store-wide discount system. Making the admin API the issuer is the only reading in which both required behaviors — "checkout validates the code" and "admin generates the code if the condition is satisfied" — have a real job. The checkout response still carries an `unlockedDiscountEligibility` flag so the storefront can celebrate the nth order without owning issuance.
+**Why:** Global counting matches the real-world pattern ("our 1000th customer gets a discount") for a store-wide promotion. Making the admin API the issuer is the only reading in which both behaviors — checkout *validating* a code and the admin *generating* one when the condition is satisfied — have a real job. The checkout response still carries an `unlockedDiscountEligibility` flag so the storefront can celebrate the nth order without owning issuance.
 
 ## Decision: All money as integer cents
 
@@ -80,7 +80,7 @@
 
 ## Decision: In-memory store as an injectable class, with all logic in services
 
-**Context:** The assignment allows an in-memory store, but "in-memory" done as module-level singletons makes tests order-dependent and leaves no seam for ever swapping in a database.
+**Context:** v1 deliberately runs on an in-memory store (no database), but "in-memory" done as module-level singletons makes tests order-dependent and leaves no seam for ever swapping in a database.
 
 **Options Considered:**
 - Option A: An `InMemoryStore` class holding plain state (Maps + an orders array), injected into service classes; the Express app is built by a `createApp(store, config)` factory.
@@ -89,4 +89,4 @@
 
 **Choice:** Injectable `InMemoryStore` + service classes (`CartService`, `DiscountService`, `CheckoutService`, `StatsService`) + an app factory; routes stay thin (HTTP + validation only).
 
-**Why:** Every test gets a fresh, isolated world — unit tests instantiate services directly with a small catalog and fast discount config (n=2/3), and the integration test boots a real app the same way. Business rules live in exactly one layer, which is the layer the assignment grades ("unit tests for core business logic"). And the store's surface is small enough that replacing it with a database-backed implementation later is a contained change rather than a rewrite.
+**Why:** Every test gets a fresh, isolated world — unit tests instantiate services directly with a small catalog and fast discount config (n=2/3), and the integration test boots a real app the same way. Business rules live in exactly one layer, which is the layer the unit tests target. And the store's surface is small enough that replacing it with a database-backed implementation later is a contained change rather than a rewrite.
