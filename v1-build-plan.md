@@ -1,4 +1,4 @@
-# v1 Build Plan — Ecommerce Store Assessment
+# v1 Build Plan — Ecommerce Store
 
 Status: **DONE — completed 2026-07-29 (locked same day, all phases delivered)**
 
@@ -16,24 +16,24 @@ This is the single source of truth for the v1 build. Nothing gets implemented th
 - In-memory store (no database)
 - Unit tests for core business logic + API-level integration tests
 - React frontend: store, cart, checkout, admin dashboard
-- `README.md`, `DECISIONS.md` (≥5 decisions)
+- `README.md`, `DECISIONS.md`
 
 **Out of scope (v1):**
 - Authentication/authorization (users identified by a plain ID; admin routes unprotected but namespaced)
 - Persistence, payments, inventory/stock tracking, product management CRUD
-- Removing/updating cart line items (add + checkout is what's assessed) — *flag if you want this*
+- Removing/updating cart line items (add + checkout is the core flow)
 
-## 2. Business Rules (proposed — confirm before lock)
+## 2. Business Rules (locked)
 
-These interpret the assignment's ambiguities. Each is a defensible default; flag any you'd change.
+These pin down the ambiguities in the discount requirement (owner decisions recorded at the end of this doc).
 
-| # | Rule | Proposal |
+| # | Rule | Resolution |
 |---|------|----------|
 | R1 | "Every nth order" counts | **Globally across the store** (order #n, #2n, #3n...), not per-customer. Simpler, matches "the store has a discount system" phrasing. |
 | R2 | n and x values | `n = 5`, `x = 10` (%). Defined in one config module, injectable in tests so `n = 2` etc. is trivially testable. |
-| R3 | When is a code generated | Completing the *n*th order makes the store eligible; the **admin API generates the code** (per the assignment: "generate a discount code if the condition above is satisfied"). One code per eligibility window — no stockpiling multiple codes from one nth order. |
+| R3 | When is a code generated | Completing the *n*th order makes the store eligible; the **admin API generates the code** on demand. One code per eligibility window — no stockpiling multiple codes from one nth order. |
 | R4 | Who can use a generated code | Any customer (codes are store-wide, not customer-bound) — consistent with R1. |
-| R5 | Code lifecycle | Single-use. Valid → applied at checkout → consumed. Invalid/used/nonexistent codes → checkout rejected with a clear error (assignment says checkout *validates* the code). |
+| R5 | Code lifecycle | Single-use. Valid → applied at checkout → consumed. Invalid/used/nonexistent codes → checkout rejected with a clear error before any state changes. |
 | R6 | Discount math | x% off the cart subtotal, applied to the whole order. Money handled in **integer cents** to avoid float errors. |
 
 ## 3. Architecture
@@ -52,7 +52,7 @@ uniblox/
 │   │       ├── index.ts       # bootstrap (listen) — kept apart from app.ts for testability
 │   │       ├── app.ts         # express app factory
 │   │       ├── config.ts      # DISCOUNT_N, DISCOUNT_PERCENT
-│   │       ├── store/         # in-memory store (Maps), reset() for tests
+│   │       ├── store/         # in-memory store (Maps), fresh instance per test
 │   │       ├── services/      # cart.service, checkout.service, discount.service, stats.service
 │   │       ├── routes/        # cart.routes, checkout.routes, admin.routes, products.routes
 │   │       └── middleware/    # zod validation, error handler
@@ -105,13 +105,13 @@ Four views, React Router, all data via TanStack Query hooks wrapping a typed fet
 
 User identity: a `userId` generated on first visit, kept in `localStorage`, sent as `x-user-id`. Dev proxy: Vite proxies `/api` → Express (no CORS config needed).
 
-Polish level: Tailwind, clean and legible, no component library. Not pixel-perfect — it's a bonus deliverable.
+Polish level: Tailwind, clean and legible, no component library. Not pixel-perfect — clear and functional is the bar for v1.
 
 ## 6. Testing Strategy
 
 All Vitest.
 
-**Unit tests (the graded core — `services/`):**
+**Unit tests (`services/` — the layer holding all business logic):**
 - `discount.service`: nth-order eligibility (boundaries: order n−1, n, n+1, 2n), code generation uniqueness, one-code-per-window, validate/consume lifecycle (valid, already-used, unknown)
 - `checkout.service`: totals with/without discount, integer-cents rounding, cart cleared after order, empty-cart rejection, order counter increments
 - `cart.service`: add new item, add same item again (quantity merge), unknown product rejection
@@ -119,13 +119,13 @@ All Vitest.
 
 **Integration tests (supertest against the app factory):** happy-path flow — add to cart → checkout without code → repeat to nth order → admin generates code → checkout with code → stats reflect everything. Plus key error paths (bad code, empty cart, invalid body).
 
-Config injection (`n`, `x`) keeps tests fast and deterministic. `store.reset()` between tests.
+Config injection (`n`, `x`) keeps tests fast and deterministic; every test builds a fresh store instance.
 
-Frontend tests: **not in v1 scope** (backend tests are the graded requirement) — *flag if you disagree*.
+Frontend tests: **not in v1 scope** (the business logic under test all lives in the API).
 
 ## 7. Build Phases & Commit Points
 
-Each phase ends at a suggested commit (you run git). Messages follow conventional commits.
+Each phase ends at one commit. Messages follow conventional commits.
 
 | Phase | Work | Suggested commit |
 |---|---|---|
@@ -139,9 +139,9 @@ Each phase ends at a suggested commit (you run git). Messages follow conventiona
 | 7 | `apps/web` scaffold: Vite, Tailwind, TanStack Query, router, typed API client | `feat(web): scaffold react app with api client` |
 | 8 | Store + Cart + Checkout pages wired to API | `feat(web): store, cart and checkout flow` |
 | 9 | Admin dashboard page | `feat(web): admin stats and discount generation` |
-| 10 | README (setup, run, test, API reference), final DECISIONS.md pass (≥5 check), polish | `docs: readme and final design decisions` |
+| 10 | README (setup, run, test, API reference), final DECISIONS.md pass, polish | `docs: readme and final design decisions` |
 
-Phases 4–6 are where "show your thinking" lives — small commits, tests land with the code they test.
+Phases 4–6 carry the core business logic — small commits, tests landing with the code they test.
 
 ## 8. Definition of Done (v1)
 
@@ -150,8 +150,8 @@ Phases 4–6 are where "show your thinking" lives — small commits, tests land 
 - [x] Business rules R1–R6 implemented exactly as locked
 - [x] Unit + integration tests per §6 passing (31 tests: 25 unit + 6 integration)
 - [x] Frontend covers all four views in §5
-- [x] README: setup, scripts, API reference (serves as the Postman-alternative), assumptions
-- [x] DECISIONS.md has ≥5 decisions (7: stack, monorepo, shared zod schemas, frontend stack, global nth-order + admin generation, integer cents, injectable in-memory store)
+- [x] README: setup, scripts, API reference with curl examples, assumptions
+- [x] DECISIONS.md covers the key decisions (7: stack, monorepo, shared zod schemas, frontend stack, global nth-order + admin generation, integer cents, injectable in-memory store)
 
 ---
 
