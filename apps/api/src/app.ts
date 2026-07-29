@@ -2,8 +2,11 @@ import express from "express";
 import { type AppConfig, defaultConfig } from "./config.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { cartRouter } from "./routes/cart.routes.js";
+import { checkoutRouter } from "./routes/checkout.routes.js";
 import { productsRouter } from "./routes/products.routes.js";
 import { CartService } from "./services/cart.service.js";
+import { CheckoutService } from "./services/checkout.service.js";
+import { DiscountService } from "./services/discount.service.js";
 import { InMemoryStore } from "./store/store.js";
 
 /**
@@ -22,11 +25,17 @@ export function createApp(
   });
 
   const cartService = new CartService(store);
+  const discountService = new DiscountService(store, config);
+  const checkoutService = new CheckoutService(
+    store,
+    cartService,
+    discountService,
+    config,
+  );
 
   app.use("/api/products", productsRouter(store));
   app.use("/api/cart", cartRouter(cartService));
-
-  void config; // consumed by checkout/admin routes in later phases
+  app.use("/api/checkout", checkoutRouter(checkoutService));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
