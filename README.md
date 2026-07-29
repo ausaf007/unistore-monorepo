@@ -11,7 +11,7 @@ The design is documented in [`DECISIONS.md`](./DECISIONS.md) (key trade-offs) an
 | `apps/api` | Node.js + TypeScript, Express 5, Zod validation, in-memory store |
 | `apps/web` | React 19 SPA — Vite, Tailwind CSS v4, TanStack Query |
 | `packages/shared` | Zod schemas + `z.infer` types shared by both apps (single source of truth for API contracts) |
-| Tests | Vitest + Supertest (31 tests: unit tests on services, one end-to-end integration flow) |
+| Tests | Vitest + Supertest (31 tests: 25 unit tests on services, 6 API integration tests incl. a full end-to-end flow) |
 
 ## Getting started
 
