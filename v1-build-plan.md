@@ -1,6 +1,6 @@
 # v1 Build Plan — Ecommerce Store Assessment
 
-Status: **DRAFT — pending review & lock**
+Status: **LOCKED — Owner lock, 2026-07-29**
 
 This is the single source of truth for the v1 build. Nothing gets implemented that isn't in this doc; if scope changes, this doc changes first.
 
@@ -155,8 +155,8 @@ Phases 4–6 are where "show your thinking" lives — small commits, tests land 
 
 ---
 
-**Open items for your review before lock:**
-1. R1: global nth-order counting vs per-customer — confirm global?
-2. R2: happy with n=5, x=10?
-3. Cart item removal/quantity update — stay out of scope?
-4. Frontend tests excluded from v1 — OK?
+**Open items — resolved at lock (owner decisions, 2026-07-29):**
+1. R1 — **Global** nth-order counting confirmed (mirrors real stores: "our 1000th customer gets a discount").
+2. R2 — n=5, x=10 confirmed; stored as config (`config.ts`), injectable in tests. Not hardcoded at call sites.
+3. Cart item removal/quantity update — **out of scope** for v1.
+4. Frontend tests — **out of scope** for v1.
