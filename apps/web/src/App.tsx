@@ -1,4 +1,5 @@
 import { NavLink, Route, Routes } from "react-router-dom";
+import { useCart } from "./api/hooks.js";
 import { AdminPage } from "./pages/AdminPage.js";
 import { CartPage } from "./pages/CartPage.js";
 import { CheckoutPage } from "./pages/CheckoutPage.js";
@@ -12,6 +13,10 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 export function App() {
+  const cart = useCart();
+  const cartCount =
+    cart.data?.items.reduce((sum, line) => sum + line.quantity, 0) ?? 0;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
@@ -24,7 +29,7 @@ export function App() {
               Store
             </NavLink>
             <NavLink to="/cart" className={navLinkClass}>
-              Cart
+              Cart{cartCount > 0 ? ` (${cartCount})` : ""}
             </NavLink>
             <NavLink to="/admin" className={navLinkClass}>
               Admin
