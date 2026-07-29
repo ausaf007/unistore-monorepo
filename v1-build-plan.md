@@ -52,10 +52,11 @@ uniblox/
 │   │       ├── index.ts       # bootstrap (listen) — kept apart from app.ts for testability
 │   │       ├── app.ts         # express app factory
 │   │       ├── config.ts      # DISCOUNT_N, DISCOUNT_PERCENT
+│   │       ├── errors.ts      # AppError (domain error → HTTP mapping)
 │   │       ├── store/         # in-memory store (Maps), fresh instance per test
 │   │       ├── services/      # cart.service, checkout.service, discount.service, stats.service
 │   │       ├── routes/        # cart.routes, checkout.routes, admin.routes, products.routes
-│   │       └── middleware/    # zod validation, error handler
+│   │       └── middleware/    # zod validation, user-id, error handler
 │   └── web/                   # Vite + React + TS + Tailwind + TanStack Query
 │       └── src/
 │           ├── api/           # typed fetch client using shared schemas
@@ -64,7 +65,7 @@ uniblox/
 └── packages/
     └── shared/                # zod schemas + z.infer types (single source of truth)
         └── src/
-            ├── product.ts, cart.ts, order.ts, discount.ts, stats.ts
+            ├── product.ts, cart.ts, order.ts, discount.ts, stats.ts, api-error.ts
             └── index.ts
 ```
 
@@ -83,7 +84,7 @@ Base path `/api`. Customer identified via `x-user-id` header (no auth in scope).
 | `GET /api/products` | List catalog | — | `Product[]` |
 | `GET /api/cart` | View my cart | header `x-user-id` | `Cart` (items + subtotal) |
 | `POST /api/cart/items` | Add item to cart | `{ productId, quantity }` | updated `Cart` |
-| `POST /api/checkout` | Place order | `{ discountCode? }` | `Order` (items, subtotal, discount applied, total, orderNumber) |
+| `POST /api/checkout` | Place order | `{ discountCode? }` | `{ order, unlockedDiscountEligibility }` — order carries items, subtotal, discount, total, orderNumber |
 
 Checkout behavior: empty cart → `400`. Invalid/used/unknown discount code → `400` with reason (order NOT placed). Valid code → discount applied, code marked used, order placed, cart cleared. Response includes whether this order made the store eligible for a new discount code (nice frontend touch).
 
@@ -98,7 +99,7 @@ Checkout behavior: empty cart → `400`. Invalid/used/unknown discount code → 
 
 Four views, React Router, all data via TanStack Query hooks wrapping a typed fetch client:
 
-1. **Store** — product grid, "Add to cart" buttons (mutation → invalidate cart query)
+1. **Store** — product grid, "Add to cart" buttons (mutation writes the returned cart into the query cache)
 2. **Cart** — line items, subtotal, "Proceed to checkout"
 3. **Checkout** — order summary, optional discount-code input, place order; success state shows order + savings; invalid code shows the API's error inline
 4. **Admin** — stats dashboard + "Generate discount code" button (shows generated code, or the not-eligible message)

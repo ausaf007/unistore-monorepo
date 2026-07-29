@@ -33,7 +33,7 @@
 **Options Considered:**
 - Option A: Zod schemas in `packages/shared`, TypeScript types derived via `z.infer` — one definition per contract; the API validates with the exact schema the frontend imports.
 - Option B: Plain TypeScript interfaces in shared + hand-written validation in the API — types erase at runtime, so validation logic duplicates the interface and drifts when it changes.
-- Option C: JSON Schema / OpenAPI-first with codegen — the most "enterprise" option, but codegen pipelines are heavy machinery for a five-endpoint MVP.
+- Option C: JSON Schema / OpenAPI-first with codegen — the most "enterprise" option, but codegen pipelines are heavy machinery for a six-endpoint MVP.
 
 **Choice:** Zod schemas in `packages/shared` with `z.infer` derived types.
 
